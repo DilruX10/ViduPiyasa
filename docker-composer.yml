@@ -1,0 +1,77 @@
+version: '3'
+
+services:
+  mongo:
+    image: mongo
+    ports:
+      - 27017:27017
+    volumes:
+      - mongodb_data:/data/db
+  
+  notify:
+    build: ./NotifyService
+    ports:
+      - 3006:3006
+
+  user-management:
+    build: ./UserManagementService
+    ports:
+      - 3001:3001
+    depends_on:
+      - mongo
+
+  auth-management:
+    build: ./AuthManagementService
+    ports:
+      - 3002:3002
+    depends_on:
+      - mongo
+
+  course-management:
+    build: ./CourseManagementService
+    ports:
+      - 3003:3003
+    depends_on:
+      - mongo
+      - notify
+
+  learner-management:
+    build: ./LearnerManagementService
+    ports:
+      - 3005:3004
+    depends_on:
+      - mongo
+
+  payment-management:
+    build: ./PaymentManagementService
+    ports:
+      - 3005:3005
+    depends_on:
+      - mongo
+      
+  api-gateway:
+    build: ./ApiGateway
+    ports:
+      - 3008:3008
+    depends_on:
+      - mongo
+      - auth-management
+      - user-management
+      - course-management
+      - learner-management
+      - payment-management
+      - notify
+
+  web-ui:
+    build: ./Web-ui
+    ports:
+      - 3000:3000
+
+    environment:
+      - API_URL=http://api-gateway:3008
+
+    depends_on:
+      - api-gateway
+
+volumes:
+  mongodb_data:
